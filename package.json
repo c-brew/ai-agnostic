@@ -1,6 +1,6 @@
 {
   "name": "ai-agnostic",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Seamlessly migrate AI workspaces between Claude, ChatGPT, and other platforms",
   "type": "module",
   "main": "dist/index.js",
