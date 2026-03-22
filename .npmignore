@@ -1,0 +1,12 @@
+# Test files — not needed by consumers
+src/__tests__/
+dist/__tests__/
+
+# Dev and debug files
+debug-detect.mjs
+DEVELOPMENT.md
+CONTRIBUTING.md
+
+# Misc
+.DS_Store
+*.swp
