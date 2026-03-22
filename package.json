@@ -7,8 +7,15 @@
   "bin": {
     "ai-agnostic": "dist/cli/index.js"
   },
+  "files": [
+    "dist/",
+    "src/",
+    "README.md",
+    "LICENSE"
+  ],
   "scripts": {
     "build": "tsc",
+    "prepare": "npm run build",
     "dev": "tsc --watch",
     "start": "node dist/cli/index.js",
     "lint": "tsc --noEmit"
