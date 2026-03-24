@@ -195,31 +195,6 @@ interface AgnosticWorkspace {
 - Transport method (stdio, SSE, HTTP)
 - Available tools and environment variables
 
-## Roadmap
-
-### Phase 1: CLI ✓
-- [x] Universal schema design
-- [x] Claude adapter (read/write)
-- [x] OpenAI adapter (read/write)
-- [x] CLI with convert, inspect, detect, platforms commands
-- [x] Real-world conversion testing (7 skills from Claude → OpenAI)
-
-### Phase 2: MCP Server
-- [ ] Expose universal schema as MCP server
-- [ ] Allow Claude / OpenAI to call converters from within conversations
-- [ ] Enable live workspace inspection and migration workflows
-
-### Phase 3: Web Application
-- [ ] Drag-and-drop workspace upload
-- [ ] Interactive conversion preview
-- [ ] Download converted workspaces
-- [ ] Multi-user workspace management
-
-### Phase 4: Open Standard
-- [ ] Propose AI Agnostic as an open standard for workspace portability
-- [ ] Build ecosystem: adapters for Gemini, Llama, custom LLMs
-- [ ] Create community-driven adapter registry
-
 ## How It Works
 
 1. **Detect** — AI Agnostic analyzes the source directory to identify the platform
@@ -232,10 +207,12 @@ interface AgnosticWorkspace {
 ```
 Claude Workspace
 ├── CLAUDE.md           ┐
-├── .claude/           ├─→  Parse  ───→  AgnosticWorkspace  ───→  Map  ───→  OpenAI Format
-├── skills/           │                                              ├─→ custom_gpts/
-└── knowledge/        ┘                                              ├─→ assistants.json
-                                                                     └─→ knowledge/
+├── .claude/            ├─→  Parse  ───→  AgnosticWorkspace  ───→  Map  ───→  OpenAI Format
+├── .skills/            │                                              ├─→ gpts/
+└── .mcp.json           ┘                                              ├─→ assistants/
+                                                                       ├─→ knowledge/
+                                                                       ├─→ functions.json
+                                                                       └─→ MIGRATION_GUIDE.md
 ```
 
 ## Adapters
@@ -243,14 +220,28 @@ Claude Workspace
 Adapters are bidirectional translators between a platform's native format and the universal schema.
 
 ### Claude Adapter
-- **Reads:** Claude workspace structure (CLAUDE.md, .claude/, skills/, knowledge/)
-- **Writes:** Claude-compatible directory structure
-- **Supports:** Skills, MCP servers, knowledge files, scoped rules, system instructions
+
+- **Reads:** `CLAUDE.md`, `.claude/rules/`, `.mcp.json`, `.skills/skills/<name>/SKILL.md`
+- **Writes:** Full Claude workspace structure including all of the above
+- **Auto-detects:** Presence of `CLAUDE.md`, `.claude/`, `.mcp.json`, or `.skills/`
+- **Preserves:** References, templates, scripts, assets, scoped rules, MCP configs
 
 ### OpenAI Adapter
-- **Reads:** OpenAI workspace format (custom_gpts/, assistants.json)
-- **Writes:** OpenAI-compatible format
-- **Supports:** Assistants, tools, custom GPTs, knowledge files
+
+- **Reads:** `assistants/*.json`, `gpts/*.json`
+- **Writes:** Per-skill GPT config + Assistants API JSON + knowledge files + `MIGRATION_GUIDE.md`
+- **Auto-detects:** Presence of `assistants/`, `gpts/`, or `openai-config.json`
+- **Capability mapping:** `code_execution` → Code Interpreter, `web_search` → Web Browsing, `file_search` → File Search
+
+### Known Limitations
+
+| Issue | Detail |
+|-------|--------|
+| Script execution | Claude skills can contain Python/Bash scripts; GPTs can't run them. Scripts are flagged with a suggestion (deploy as API endpoints or use Code Interpreter). |
+| GPT 8,000 char limit | Long skills get truncated in the GPT config. The Assistants API config retains the full text. |
+| STDIO MCP servers | ChatGPT only supports remote MCP (HTTP/SSE). Local STDIO servers need a proxy wrapper (e.g., `mcp-proxy`). Flagged in the migration guide. |
+| Knowledge file upload | The converter writes files to disk. Uploading them to OpenAI's vector store requires an extra API call step. |
+| Scoped rules | OpenAI has no equivalent of path-scoped rules. They're flagged with a suggestion to merge into GPT instructions. |
 
 ## Contributing
 
@@ -277,7 +268,15 @@ node dist/cli/index.js --help
 
 # Watch mode for development
 npm run dev
+
+# Run tests (vitest, against real temp directories — no mocking)
+npm test
+
+# Test coverage
+npm run test:coverage
 ```
+
+Tests live in `src/__tests__/` and cover the parser, Claude adapter, OpenAI adapter, and converter pipeline end-to-end.
 
 ## License
 

@@ -29,8 +29,18 @@ Thumbs.db
 
 # Test output and demos
 test-output/
+output/
 *.test.js
 .coverage/
+
+# Local Claude Code setup — not part of the project
+.claude/
+.claude-flow/
+CLAUDE.md
+.mcp.json
+
+# Debug / scratch files
+debug-detect.mjs
 
 # Package manager lock files (optional; uncomment if you prefer)
 # package-lock.json
